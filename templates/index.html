@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Analysis Chatbot Assistant</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-left">
+            <span class="material-icons" style="color: #999;">directions_run</span>
+            <span style="color: #999;">RUNNING...</span>
+        </div>
+        <div class="navbar-right">
+            <button class="stop-button">Stop</button>
+            <button class="menu-button">
+                <span class="material-icons">menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <h1>Stockman Chatbot 😏🤖📈</h1>
+        
+        <div class="chat-box" id="chat-box"></div>
+        
+        <div class="input-container">
+            <label class="input-label">Your input:</label>
+            <input type="text" id="user-input" placeholder="Ask me a question about stocks... (or about anything really)">
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const question = input.value;
+            
+            if (!question) return;
+            
+            // Add user message to chat
+            addMessageToChat(question, 'user');
+            input.value = '';
+            
+            // Send to backend
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addMessageToChat(data.error, 'assistant');
+                } else {
+                    addMessageToChat(data.answer, 'assistant');
+                    if (data.chart) {
+                        addChartToChat(data.chart);
+                    }
+                }
+            });
+        }
+
+        function addMessageToChat(message, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = sender === 'user' ? 'You: ' + message : 'Stock Man: ' + message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addChartToChat(chartUrl) {
+            const chatBox = document.getElementById('chat-box');
+            const img = document.createElement('img');
+            img.src = chartUrl;
+            chatBox.appendChild(img);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Send message when Enter key is pressed
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Handle Stop button click
+        document.querySelector('.stop-button').addEventListener('click', function() {
+            // Add stop functionality here
+            console.log('Stop button clicked');
+        });
+    </script>
+</body>
+</html>
